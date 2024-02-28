@@ -71,6 +71,37 @@ function assertSelfValidates(doc) {
     return context;
 }
 
+function prototypePollution() {
+    var context = {};
+    const instance = JSON.parse(
+    '{'+
+    '"$schema":{'+
+        '"type": "object",'+
+        '"properties":{'+
+        '"__proto__": {'+
+            '"type": "object",'+
+            '"properties":{'+
+            '"polluted": {'+
+                '"type": "string",'+
+                '"default": "polluted"'+
+            '}'+
+            '}'+
+        '}'+
+        '},'+
+        '"__proto__": {}'+
+    '}'+
+    '}');
+
+    const a = {};
+    context[': validate prototype'] = {
+        topic: validate(instance),
+        'returns valid result': resultIsValid(),
+        'with valid=true': function(result) { assert.equal(result.valid, true); },
+        'and no errors': function(result) { assert.equal(result.errors.length, 0); },
+        'and no pollution':function(){assert.equal(a.polluted, undefined);}
+    };
+    return context;
+}
 var suite = vows.describe('JSON Schema').addBatch({
     'Core-NSD self-validates': assertSelfValidates('schema-nsd'),
     'Core-NSD/Core-NSD': assertValidates('schema-nsd', 'schema-nsd'),
@@ -91,5 +122,6 @@ var suite = vows.describe('JSON Schema').addBatch({
 
     'Json-Ref self-validates': assertSelfValidates('json-ref'),
     'Json-Ref/Hyper': assertValidates('json-ref', 'hyper-schema'),
-    'Json-Ref/Core': assertValidates('json-ref', 'schema')
+    'Json-Ref/Core': assertValidates('json-ref', 'schema'),
+    'validate prototype pollution': prototypePollution(),
 }).export(module);
